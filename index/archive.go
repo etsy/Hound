@@ -20,7 +20,7 @@ func stringInSlice(a string, list []string) bool {
 }
 
 func isArchiveRepo(repo *config.Repo) bool {
-	return stringInSlice(repo.Vcs, []string{"zip"})
+	return stringInSlice(repo.Vcs, []string{"archive"})
 }
 
 func openArchive(repo *config.Repo) (fs.FS, error) {
