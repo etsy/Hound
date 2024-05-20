@@ -13,6 +13,7 @@ import (
 
 	"github.com/hound-search/hound/codesearch/index"
 	"github.com/hound-search/hound/codesearch/regexp"
+	"github.com/hound-search/hound/config"
 )
 
 const (
@@ -366,7 +367,7 @@ func containsString(haystack []string, needle string) bool {
 	return false
 }
 
-func indexAllFiles(opt *IndexOptions, dst, src string) error {
+func indexAllFiles(opt *IndexOptions, dst, src string, repo *config.Repo) error {
 	ix := index.Create(filepath.Join(dst, "tri"))
 	defer ix.Close()
 
@@ -386,7 +387,13 @@ func indexAllFiles(opt *IndexOptions, dst, src string) error {
 		}
 	}
 
+	// :TODO: if repo.Vcs == "zip"
+
 	if err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error { //nolint
+		if err != nil {
+			return err
+		}
+
 		name := info.Name()
 		rel, err := filepath.Rel(src, path) //nolint
 		if err != nil {
@@ -485,7 +492,7 @@ func Read(dir string) (*IndexRef, error) {
 	return m, nil
 }
 
-func Build(opt *IndexOptions, dst, src, url, rev string) (*IndexRef, error) {
+func Build(opt *IndexOptions, dst, src string, repo *config.Repo, rev string) (*IndexRef, error) {
 	if _, err := os.Stat(dst); err != nil {
 		if err := os.MkdirAll(dst, os.ModePerm); err != nil {
 			return nil, err
@@ -496,12 +503,12 @@ func Build(opt *IndexOptions, dst, src, url, rev string) (*IndexRef, error) {
 		return nil, err
 	}
 
-	if err := indexAllFiles(opt, dst, src); err != nil {
+	if err := indexAllFiles(opt, dst, src, repo); err != nil {
 		return nil, err
 	}
 
 	r := &IndexRef{
-		Url:                url,
+		Url:                repo.Url,
 		Rev:                rev,
 		Time:               time.Now(),
 		dir:                dst,

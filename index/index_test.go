@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/hound-search/hound/config"
 )
 
 const (
@@ -28,7 +30,10 @@ func buildIndex(url, rev string) (*IndexRef, error) {
 
 	var opt IndexOptions
 
-	return Build(&opt, dir, thisDir(), url, rev)
+	return Build(&opt, dir, thisDir(), &config.Repo{
+		Url: url,
+		Vcs: "git",
+	}, rev)
 }
 
 func TestSearch(t *testing.T) {
@@ -37,7 +42,7 @@ func TestSearch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ref.Remove()  //nolint
+	defer ref.Remove() //nolint
 
 	// Make sure the metadata in the ref is good.
 	if ref.Rev != rev {
@@ -67,7 +72,7 @@ func TestSearchWithLimits(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ref.Remove()  //nolint
+	defer ref.Remove() //nolint
 
 	// Make sure the ref can be opened.
 	idx, err := ref.Open()
@@ -116,7 +121,7 @@ func TestRead(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ref.Remove()  //nolint
+	defer ref.Remove() //nolint
 
 	r, err := Read(ref.Dir())
 	if err != nil {
