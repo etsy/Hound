@@ -49,8 +49,8 @@ func TestSearch(t *testing.T) {
 		t.Fatalf("expected rev of %s, got %s", rev, ref.Rev)
 	}
 
-	if ref.Url != url {
-		t.Fatalf("expected url of %s got %s", url, ref.Url)
+	if ref.Repo.Url != url {
+		t.Fatalf("expected url of %s got %s", url, ref.Repo.Url)
 	}
 
 	// Make sure the ref can be opened.
@@ -128,8 +128,8 @@ func TestRead(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if r.Url != url {
-		t.Fatalf("expected url of %s, got %s", url, r.Url)
+	if r.Repo.Url != url {
+		t.Fatalf("expected url of %s, got %s", url, r.Repo.Url)
 	}
 
 	if r.Rev != rev {

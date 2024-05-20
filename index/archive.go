@@ -23,9 +23,13 @@ func isArchiveRepo(repo *config.Repo) bool {
 	return stringInSlice(repo.Vcs, []string{"zip"})
 }
 
-func indexArchive(opt *IndexOptions, repo *config.Repo, ix *index.IndexWriter) ([]*ExcludedFile, error) {
+func openArchive(repo *config.Repo) (fs.FS, error) {
 	ctx := context.Background()
-	fsys, err := archiver.FileSystem(ctx, repo.Url)
+	return archiver.FileSystem(ctx, repo.Url)
+}
+
+func indexArchive(opt *IndexOptions, repo *config.Repo, ix *index.IndexWriter) ([]*ExcludedFile, error) {
+	fsys, err := openArchive(repo)
 	if err != nil {
 		return nil, err
 	}

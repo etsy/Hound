@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sync"
@@ -78,7 +79,7 @@ type ExcludedFile struct {
 }
 
 type IndexRef struct {
-	Url                string
+	Repo               *config.Repo
 	Rev                string
 	Time               time.Time
 	dir                string
@@ -185,6 +186,23 @@ func (n *Index) Search(pat string, opt *SearchOptions) (*SearchResponse, error) 
 		}
 	}
 
+	openArchiveCached := func() func() (fs.FS, error) {
+		done := false
+		var fsys fs.FS
+		var err error
+
+		return func() (fs.FS, error) {
+			if done {
+				return fsys, err
+			}
+
+			fsys, err = openArchive(n.Ref.Repo)
+			done = true
+
+			return fsys, err
+		}
+	}()
+
 	files := n.idx.PostingQuery(index.RegexpQuery(re.Syntax))
 	for _, file := range files {
 		var matches []*Match
@@ -207,29 +225,47 @@ func (n *Index) Search(pat string, opt *SearchOptions) (*SearchResponse, error) 
 		}
 
 		filesOpened++
-		if err := g.grep2File(filepath.Join(n.Ref.dir, "raw", name), re, int(opt.LinesOfContext),
-			func(line []byte, lineno int, before [][]byte, after [][]byte) (bool, error) {
+		matchCollector := func(line []byte, lineno int, before [][]byte, after [][]byte) (bool, error) {
 
-				hasMatch = true
-				if filesFound < opt.Offset || (opt.Limit > 0 && filesCollected >= opt.Limit) {
-					return false, nil
-				}
+			hasMatch = true
+			if filesFound < opt.Offset || (opt.Limit > 0 && filesCollected >= opt.Limit) {
+				return false, nil
+			}
 
-				matchesCollected++
-				matches = append(matches, &Match{
-					Line:       string(line),
-					LineNumber: lineno,
-					Before:     toStrings(before),
-					After:      toStrings(after),
-				})
+			matchesCollected++
+			matches = append(matches, &Match{
+				Line:       string(line),
+				LineNumber: lineno,
+				Before:     toStrings(before),
+				After:      toStrings(after),
+			})
 
-				if opt.MaxResults > 0 && matchesCollected >= opt.MaxResults {
-					return false, nil
-				}
+			if opt.MaxResults > 0 && matchesCollected >= opt.MaxResults {
+				return false, nil
+			}
 
-				return true, nil
-			}); err != nil {
-			return nil, err
+			return true, nil
+		}
+
+		if isArchiveRepo(n.Ref.Repo) {
+			fsys, err := openArchiveCached()
+			if err != nil {
+				return nil, err
+			}
+
+			r, err := fsys.Open(name)
+			if err != nil {
+				return nil, err
+			}
+			defer r.Close()
+
+			if err := g.grep2(r, re, int(opt.LinesOfContext), matchCollector); err != nil {
+				return nil, err
+			}
+		} else {
+			if err := g.grep2File(filepath.Join(n.Ref.dir, "raw", name), re, int(opt.LinesOfContext), matchCollector); err != nil {
+				return nil, err
+			}
 		}
 
 		if !hasMatch {
@@ -530,7 +566,7 @@ func Build(opt *IndexOptions, dst, src string, repo *config.Repo, rev string) (*
 	}
 
 	r := &IndexRef{
-		Url:                repo.Url,
+		Repo:               repo,
 		Rev:                rev,
 		Time:               time.Now(),
 		dir:                dst,

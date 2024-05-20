@@ -74,7 +74,7 @@ func (l limiter) Release() {
  */
 func (r *foundRefs) find(url, rev string) *index.IndexRef {
 	for _, ref := range r.refs {
-		if ref.Url == url && ref.Rev == rev {
+		if ref.Repo.Url == url && ref.Rev == rev {
 			return ref
 		}
 	}
