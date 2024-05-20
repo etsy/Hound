@@ -257,14 +257,8 @@ func (n *Index) Search(pat string, opt *SearchOptions) (*SearchResponse, error) 
 	}, nil
 }
 
-func isTextFile(filename string) (bool, error) {
+func isTextReader(r io.Reader) (bool, error) {
 	buf := make([]byte, filePeekSize)
-	r, err := os.Open(filename)
-	if err != nil {
-		return false, err
-	}
-	defer r.Close()
-
 	n, err := io.ReadFull(r, buf)
 	if err != nil && err != io.ErrUnexpectedEOF && err != io.EOF {
 		return false, err
@@ -279,7 +273,16 @@ func isTextFile(filename string) (bool, error) {
 
 	// read a prefix, allow trailing partial runes.
 	return validUTF8IgnoringPartialTrailingRune(buf), nil
+}
 
+func isTextFile(filename string) (bool, error) {
+	r, err := os.Open(filename)
+	if err != nil {
+		return false, err
+	}
+	defer r.Close()
+
+	return isTextReader(r)
 }
 
 // Determines if the buffer contains valid UTF8 encoded string data. The buffer is assumed
@@ -387,9 +390,35 @@ func indexAllFiles(opt *IndexOptions, dst, src string, repo *config.Repo) error 
 		}
 	}
 
-	// :TODO: if repo.Vcs == "zip"
+	if isArchiveRepo(repo) {
+		var err error
+		excluded, err = indexArchive(opt, repo, ix)
+		if err != nil {
+			return nil
+		}
+	} else {
+		var err error
+		excluded, err = indexFileTree(opt, dst, src, ix)
+		if err != nil {
+			return err
+		}
+	}
 
-	if err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error { //nolint
+	if err := writeExcludedFilesJson(
+		filepath.Join(dst, excludedFileJsonFilename),
+		excluded); err != nil {
+		return err
+	}
+
+	ix.Flush()
+
+	return nil
+}
+
+func indexFileTree(opt *IndexOptions, dst, src string, ix *index.IndexWriter) ([]*ExcludedFile, error) {
+	excluded := []*ExcludedFile{}
+
+	err := filepath.Walk(src, func(path string, info os.FileInfo, err error) error { //nolint
 		if err != nil {
 			return err
 		}
@@ -455,19 +484,12 @@ func indexAllFiles(opt *IndexOptions, dst, src string, repo *config.Repo) error 
 		}
 
 		return nil
-	}); err != nil {
-		return err
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	if err := writeExcludedFilesJson(
-		filepath.Join(dst, excludedFileJsonFilename),
-		excluded); err != nil {
-		return err
-	}
-
-	ix.Flush()
-
-	return nil
+	return excluded, nil
 }
 
 // Read the metadata for the index directory. Note that even if this
