@@ -88,6 +88,7 @@ func main() {
 	flagCase := flag.Bool("ignore-case", false, "")
 	flagStats := flag.Bool("show-stats", false, "")
 	flagGrep := flag.Bool("like-grep", false, "")
+	flagCheckCfg := flag.Bool("check-config", false, "")
 
 	flag.Parse()
 
@@ -112,6 +113,10 @@ func main() {
 	if err := loadConfig(&cfg); err != nil {
 		log.Panic(err)
 	}
+
+  if *flagCheckCfg {
+    return
+  }
 
 	res, repos, err := client.SearchAndLoadRepos(&cfg,
 		flag.Arg(0),
