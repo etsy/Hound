@@ -20,7 +20,7 @@ func rootDir() string {
 // add examples, we don't muck them up.
 func TestExampleConfigsAreValid(t *testing.T) {
 	var cfg Config
-	if err := cfg.LoadFromFile(filepath.Join(rootDir(), exampleConfigFile)); err != nil {
+	if err := cfg.LoadFromFile(filepath.Join(rootDir(), exampleConfigFile), true); err != nil {
 		t.Fatalf("Unable to parse %s: %s", exampleConfigFile, err)
 	}
 

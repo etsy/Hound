@@ -143,14 +143,14 @@ func main() {
 	}
 
 	var cfg config.Config
-	if err := cfg.LoadFromFile(*flagConf); err != nil {
+	if err := cfg.LoadFromFile(*flagConf, *flagCheckConf); err != nil {
 		panic(err)
 	}
 
-  if *flagCheckConf {
-    return
-  } 
-  
+	if *flagCheckConf {
+		return
+	}
+
 	// Start the web server on a background routine.
 	ws := web.Start(&cfg, *flagAddr, *flagDev)
 
