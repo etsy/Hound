@@ -130,6 +130,7 @@ func main() {
 	error_log = log.New(os.Stderr, "", log.LstdFlags)
 
 	flagConf := flag.String("conf", "config.json", "")
+	flagCheckConf := flag.Bool("check-conf", false, "")
 	flagAddr := flag.String("addr", ":6080", "")
 	flagDev := flag.Bool("dev", false, "")
 	flagVer := flag.Bool("version", false, "Display version and exit")
@@ -142,8 +143,12 @@ func main() {
 	}
 
 	var cfg config.Config
-	if err := cfg.LoadFromFile(*flagConf); err != nil {
+	if err := cfg.LoadFromFile(*flagConf, *flagCheckConf); err != nil {
 		panic(err)
+	}
+
+	if *flagCheckConf {
+		return
 	}
 
 	// Start the web server on a background routine.

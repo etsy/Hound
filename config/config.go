@@ -188,14 +188,19 @@ func mergeVCSConfigs(cfg *Config) error {
 	return nil
 }
 
-func (c *Config) LoadFromFile(filename string) error {
+func (c *Config) LoadFromFile(filename string, disallowUnknownFields bool) error {
 	r, err := os.Open(filename)
 	if err != nil {
 		return err
 	}
 	defer r.Close()
 
-	if err := json.NewDecoder(r).Decode(c); err != nil {
+	decoder := json.NewDecoder(r)
+	if disallowUnknownFields {
+		decoder.DisallowUnknownFields()
+	}
+
+	if err := decoder.Decode(c); err != nil {
 		return err
 	}
 
