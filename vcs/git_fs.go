@@ -61,35 +61,31 @@ func (fs *gitFilesystem) Open(name string) (io.ReadCloser, error) {
 }
 
 func (fs *gitFilesystem) Walk(fn FileSystemWalkFunc) error {
-	seenDirs := make(map[string]interface{})
+	seenDirs := make(map[string]bool)
 
 	return fs.root.Files().ForEach(func(f *object.File) error {
 		n := f.Name
 		var createDirs []string
-		for n != "" {
+		if f.Mode != filemode.Dir {
 			n = path.Dir(n)
-			if _, ok := seenDirs[n]; ok {
-				break
-			}
+		}
+		for n != "" && !seenDirs[n] {
 			seenDirs[n] = true
 			createDirs = append(createDirs, n)
+			n = path.Dir(n)
 		}
-		if len(createDirs) > 0 {
-			slices.Reverse(createDirs)
-			for _, createDir := range createDirs {
-				err := fn(createDir, &gitDirinfo{createDir}, nil)
-				if err != nil {
-					return err
-				}
+		slices.Reverse(createDirs)
+		for _, createDir := range createDirs {
+			if err := fn(createDir, &gitDirinfo{n}, nil); err != nil {
+				return err
 			}
 		}
 
-		fi := &gitFileinfo{f}
-		if fi.IsDir() {
-			seenDirs[f.Name] = true
+		if f.Mode != filemode.Dir {
+			return fn(f.Name, &gitFileinfo{f}, nil)
+		} else {
+			return nil
 		}
-
-		return fn(f.Name, fi, nil)
 	})
 }
 
@@ -98,7 +94,7 @@ func (fi *gitFileinfo) Name() string {
 }
 
 func (fi *gitFileinfo) IsDir() bool {
-	return fi.raw.Mode == filemode.Dir
+	return fi.Mode().IsDir()
 }
 
 func (fi *gitFileinfo) Mode() fs.FileMode {
@@ -110,8 +106,8 @@ func (di *gitDirinfo) Name() string {
 	return path.Base(di.name)
 }
 func (di *gitDirinfo) IsDir() bool {
-	return true
+	return di.Mode().IsDir()
 }
 func (di *gitDirinfo) Mode() fs.FileMode {
-	return fs.FileMode(0o755)
+	return fs.FileMode(0o755 | fs.ModeDir)
 }

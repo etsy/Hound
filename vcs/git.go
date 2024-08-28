@@ -38,7 +38,7 @@ func newGit(b []byte) (Driver, error) {
 func (g *GitDriver) Pull(dir string) (string, error) {
 	repo, err := gogit.PlainOpen(dir)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to open repository: %w", err)
 	}
 
 	fetchTarget := "HEAD"
@@ -54,18 +54,18 @@ func (g *GitDriver) Pull(dir string) (string, error) {
 			config.RefSpec(fmt.Sprintf("+%s:refs/heads/%s", fetchTarget, indexRef)),
 		},
 	}); err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to pull: %w", err)
 	}
 
 	newHead, err := repo.ResolveRevision(indexRef)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to resolve revision: %w", err)
 	}
 
 	if !g.Bare {
 		worktree, err := repo.Worktree()
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("failed to reset worktree: %w", err)
 		}
 		worktree.Reset(&gogit.ResetOptions{
 			Mode:   gogit.HardReset,
@@ -82,7 +82,7 @@ func (g *GitDriver) Clone(dir, url string) (string, error) {
 		URL:   url,
 	})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to clone %s: %w", url, err)
 	}
 
 	return g.Pull(dir)
