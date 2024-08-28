@@ -232,13 +232,13 @@ func findExistingRefs(dbpath string) (*foundRefs, error) {
 // one will be built.
 func buildAndOpenIndex(
 	opt *index.IndexOptions,
-	dbpath,
-	vcsDir,
+	dbpath string,
+	fs vcs.FileSystem,
 	idxDir,
 	url,
 	rev string) (*index.Index, error) {
 	if _, err := os.Stat(idxDir); err != nil {
-		r, err := index.Build(opt, idxDir, vcsDir, url, rev)
+		r, err := index.Build(opt, idxDir, fs, url, rev)
 		if err != nil {
 			return nil, err
 		}
@@ -366,11 +366,17 @@ func updateAndReindex(
 		return rev, false
 	}
 
+	fs, err := wd.FileSystem(vcsDir)
+	if err != nil {
+		log.Printf("vcs fs error: %s", err)
+		return rev, false
+	}
+
 	log.Printf("Rebuilding %s for %s", name, newRev)
 	idx, err := buildAndOpenIndex(
 		opt,
 		dbpath,
-		vcsDir,
+		fs,
 		nextIndexDir(dbpath),
 		repo.Url,
 		newRev)
@@ -434,10 +440,15 @@ func newSearcher(
 		refs.claim(ref)
 	}
 
+	fs, err := wd.FileSystem(vcsDir)
+	if err != nil {
+		return nil, err
+	}
+
 	idx, err := buildAndOpenIndex(
 		opt,
 		dbpath,
-		vcsDir,
+		fs,
 		idxDir,
 		repo.Url,
 		rev)

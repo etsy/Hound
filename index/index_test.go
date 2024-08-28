@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/hound-search/hound/vcs"
 )
 
 const (
@@ -26,9 +28,14 @@ func buildIndex(url, rev string) (*IndexRef, error) {
 		return nil, err
 	}
 
+	dirFs, err := vcs.NewDirFilesystem(thisDir())
+	if err != nil {
+		return nil, err
+	}
+
 	var opt IndexOptions
 
-	return Build(&opt, dir, thisDir(), url, rev)
+	return Build(&opt, dir, dirFs, url, rev)
 }
 
 func TestSearch(t *testing.T) {

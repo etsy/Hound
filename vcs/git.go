@@ -227,3 +227,7 @@ func (d *headBranchDetector) detectRef(dir string) string {
 
 	return matches[1]
 }
+
+func (g *GitDriver) FileSystem(dir string) (FileSystem, error) {
+	return NewDirFilesystem(dir)
+}
