@@ -39,9 +39,6 @@ type Driver interface {
 	// Pull new changes from the server and update the working directory.
 	Pull(dir string) (string, error)
 
-	// Return the revision at the head of the vcs directory.
-	HeadRev(dir string) (string, error)
-
 	// Return a list of special filenames that should not be indexed.
 	SpecialFiles() []string
 
