@@ -32,7 +32,7 @@ func (dir *dirFilesystem) Open(name string) (io.ReadCloser, error) {
 	return os.Open(path.Join(dir.dir, name))
 }
 
-func (dir *dirFilesystem) Walk(fn filepath.WalkFunc) error {
+func (dir *dirFilesystem) Walk(fn FileSystemWalkFunc) error {
 	return filepath.Walk(dir.dir, func(path string, info fs.FileInfo, err error) error {
 		rel, err := filepath.Rel(dir.dir, path)
 		if err != nil {

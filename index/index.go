@@ -370,7 +370,7 @@ func indexAllFiles(opt *IndexOptions, dst string, fs vcs.FileSystem) error {
 	}
 	defer fileHandle.Close()
 
-	if err := fs.Walk(func(rel string, info os.FileInfo, err error) error { //nolint
+	if err := fs.Walk(func(rel string, info vcs.FileInfo, err error) error { //nolint
 		name := info.Name()
 
 		// Is this file considered "special", this means it's not even a part

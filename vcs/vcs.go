@@ -3,9 +3,9 @@ package vcs
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 )
 
 // A collection that maps vcs names to their underlying
@@ -15,10 +15,18 @@ var drivers = make(map[string]func(c []byte) (Driver, error))
 
 // A filesystem API abstraction to allow accessing vcs objects directly
 // instead of duplicating them on disk
+type FileInfo interface {
+	Name() string
+	IsDir() bool
+	Mode() fs.FileMode
+}
+
+type FileSystemWalkFunc func(path string, info FileInfo, err error) error
+
 type FileSystem interface {
 	Open(name string) (io.ReadCloser, error)
 
-	Walk(fn filepath.WalkFunc) error
+	Walk(fn FileSystemWalkFunc) error
 }
 
 // A "plugin" for each vcs that supports the very limited set of vcs

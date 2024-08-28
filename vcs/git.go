@@ -24,6 +24,7 @@ func init() {
 type GitDriver struct {
 	DetectRef     bool   `json:"detect-ref"`
 	Ref           string `json:"ref"`
+	Bare          bool   `json:"bare"`
 	refDetetector refDetetector
 }
 
@@ -49,10 +50,15 @@ func newGit(b []byte) (Driver, error) {
 }
 
 func (g *GitDriver) HeadRev(dir string) (string, error) {
+	targetRef := "HEAD"
+	if g.Bare {
+		targetRef = fmt.Sprintf("origin/%s", g.targetRef(dir))
+	}
+
 	cmd := exec.Command(
 		"git",
 		"rev-parse",
-		"HEAD")
+		targetRef)
 	cmd.Dir = dir
 	r, err := cmd.StdoutPipe()
 	if err != nil {
@@ -102,12 +108,15 @@ func (g *GitDriver) Pull(dir string) (string, error) {
 		return "", err
 	}
 
-	if _, err := run("git reset", dir,
-		"git",
-		"reset",
-		"--hard",
-		fmt.Sprintf("origin/%s", targetRef)); err != nil {
-		return "", err
+	if !g.Bare {
+		// XXX(tvdw) Check if this works without fetch?
+		if _, err := run("git reset", dir,
+			"git",
+			"reset",
+			"--hard",
+			fmt.Sprintf("origin/%s", targetRef)); err != nil {
+			return "", err
+		}
 	}
 
 	return g.HeadRev(dir)
@@ -130,12 +139,16 @@ func (g *GitDriver) targetRef(dir string) string {
 
 func (g *GitDriver) Clone(dir, url string) (string, error) {
 	par, rep := filepath.Split(dir)
-	cmd := exec.Command(
-		"git",
+
+	cmdArgs := []string{
 		"clone",
 		"--depth", "1",
-		url,
-		rep)
+	}
+	if g.Bare {
+		cmdArgs = append(cmdArgs, "--bare")
+	}
+	cmdArgs = append(cmdArgs, url, rep)
+	cmd := exec.Command("git", cmdArgs...)
 	cmd.Dir = par
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -229,5 +242,9 @@ func (d *headBranchDetector) detectRef(dir string) string {
 }
 
 func (g *GitDriver) FileSystem(dir string) (FileSystem, error) {
-	return NewDirFilesystem(dir)
+	if g.Bare {
+		return NewGitFilesystem(dir, fmt.Sprintf("origin/%s", g.targetRef(dir)))
+	} else {
+		return NewDirFilesystem(dir)
+	}
 }
