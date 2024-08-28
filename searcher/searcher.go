@@ -264,7 +264,7 @@ func reportOnMemory() {
 // Utility function for producing a hex encoded sha1 hash for a string.
 func hashFor(name string) string {
 	h := sha1.New()
-	h.Write([]byte(name))  //nolint
+	h.Write([]byte(name)) //nolint
 	return hex.EncodeToString(h.Sum(nil))
 }
 
@@ -406,7 +406,6 @@ func newSearcher(
 	if err != nil {
 		return nil, err
 	}
-
 
 	rev, err := wd.PullOrClone(vcsDir, repo.Url)
 	if err != nil {
