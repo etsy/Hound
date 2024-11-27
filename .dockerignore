@@ -1,5 +1,4 @@
 /.vagrant
-/.build
 /node_modules
 .DS_Store
 *.exe
@@ -8,4 +7,3 @@
 /.idea
 dist/
 config.json
-/ui/.build

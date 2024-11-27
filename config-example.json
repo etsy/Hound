@@ -4,7 +4,7 @@
     "title" : "Hound",
     "health-check-uri" : "/healthz",
     "vcs-config" : {
-        "git": {
+        "git" : {
             "detect-ref" : true
         }
     },
@@ -14,8 +14,10 @@
         },
         "AnotherGitRepo" : {
             "url" : "https://www.github.com/YourOrganization/RepoOne.git",
-            "ms-between-poll": 10000,
-            "exclude-dot-files": true
+            "ms-between-poll" : 10000,
+            "exclude-dot-files" : true,
+            "display-name" : "RepoOne (dot files not indexed)",
+            "auto-generated-files" : ["example/path"]
         },
         "GitRepoWithDetectRefDisabled" : {
             "url" : "https://www.github.com/YourOrganization/RepoOne.git",
@@ -78,6 +80,27 @@
           "url-pattern" : {
               "base-url" : "{url}/{path}"
           }
+        },
+        "BitbucketServerUrl" : {
+            "url" : "git@bitbucket.internal.org:7999:organization/project.git",
+            "url-pattern" : {
+                "base-url" : "https://{hostname}/projects/{project}/repos/{repo}/browse/{path}?at={rev}{anchor}",
+                "anchor" : "#{line}"
+            },
+            "vcs-config" : {
+                "ref" : "main"
+            }
+        },
+        "LocalRepo" : {
+            "url" : "file:///absolute/path/to/directory",
+            "vcs" : "local",
+            "url-pattern" : {
+                "base-url" : "{url}/{path}"
+            },
+            "vcs-config" : {
+                "watch-changes" : false,
+                "ignored-files" : []
+            }
         }
     }
 }

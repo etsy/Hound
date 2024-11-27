@@ -9,7 +9,7 @@ a {
   color: #09f;
 }
 
-.link-gray { color: #aaa }
+.link-gray { color: #767676 }
 
 input {
   font-family: inherit;
@@ -29,7 +29,7 @@ button {
   text-align: center;
   display: inline-block;
   color: #fff;
-  background-color: #09f;
+  background-color: #007acc;
   border: 0;
   border-radius: 3px;
   cursor: pointer;
@@ -105,7 +105,7 @@ button:focus {
   background-color: #fff;
 }
 
-#adv {
+#advanced {
   box-sizing: border-box;
   overflow: hidden;
   height: 0;
@@ -118,23 +118,23 @@ button:focus {
 }
 
 /* Media object clearfix */
-#adv > .field {
+#advanced > .field {
   overflow: hidden;
 }
 
-#adv > .field > label {
+#advanced > .field > label {
   /* Media object left */
   float: left;
   width: 100px;
-  color: #999;
+  color: #767676;
 }
 
-#adv > .field > .field-input {
+#advanced > .field > .field-input {
   /* New block formatting context for media object */
   overflow: hidden;
 }
 
-#adv > .field input[type=text] {
+#advanced > .field input[type=text] {
   line-height: 24px;
   box-sizing: border-box;
   width: 100%;
@@ -160,11 +160,11 @@ button:focus {
   opacity: 1;
   overflow: hidden;
   cursor: pointer;
+  color: #767676;
 }
 
 #inb > .ban > em {
   font-style: normal;
-  color: #aaa;
 }
 
 #input > .stats {
@@ -172,7 +172,7 @@ button:focus {
   font-size: 12px;
   padding: 4px 0;
   margin: 0 auto;
-  color: #aaa;
+  color: #767676;
 }
 
 /* Clearfix .stats */
@@ -234,7 +234,7 @@ button:focus {
 }
 
 .repo > .title {
-  color: #666;
+  color: #767676;
   font-size: 24px;
   padding-bottom: 5px;
   cursor: pointer;
@@ -320,7 +320,11 @@ button:focus {
   border-right: 1px solid #eee;
   display: inline-block;
   font-size: 14px;
-  color: #aaa;
+  color: #767676;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .match > .line:last-child > .lnum {
@@ -384,3 +388,18 @@ button:focus {
   margin-bottom: 40px;
 }
 
+.file-badge {
+  background-color: gray;
+  border-radius: 0.25rem;
+  color: #fff;
+  display: inline-block;
+  float: right;
+  font-size: 75%;
+  font-weight: 700;
+  margin-top: 5px;
+  line-height: 1;
+  padding: 0.25em 0.4em;
+  text-align: center;
+  vertical-align: baseline;
+  white-space: nowrap;
+}

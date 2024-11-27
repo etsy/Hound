@@ -1,3 +1,7 @@
+export function EscapeRegExp(regexp) {
+    return regexp.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
+}
+
 export function ExpandVars(template, values) {
     for (var name in values) {
         template = template.replace('{' + name + '}', values[name]);
@@ -5,9 +9,14 @@ export function ExpandVars(template, values) {
     return template;
 };
 
-export function UrlToRepo(repo, path, line, rev) {
+export function UrlParts(repo, path, line, rev) {
     var url = repo.url.replace(/\.git$/, ''),
         pattern = repo['url-pattern'],
+        hostname = '',
+        project = '',
+        repoName = '',
+        path = path || '',
+        port = '',
         filename = path.substring(path.lastIndexOf('/') + 1),
         anchor = line ? ExpandVars(pattern.anchor, { line : line, filename : filename, repo : repo }) : '';
 
@@ -24,20 +33,44 @@ export function UrlToRepo(repo, path, line, rev) {
     // hostname, optionally a port, and then a path
     var ssh_protocol = /^(git|hg|ssh):\/\/([^@\/]+@)?([^:\/]+)(:[0-9]+)?\/(.*)/.exec(url);
 
-    // Check for bare git+ssh URIs (e.g., user@hostname:path
-    var bare_ssh = /^([^@]+)@([^:]+):(.*)/.exec(url);
-
-    if (ssh_protocol) {
-        url = '//' + ssh_protocol[3] + '/' + ssh_protocol[5];
-    } else if (bare_ssh) {
-        url = '//' + bare_ssh[2] + '/' + bare_ssh[4];
+    // Begin EasyPost edit:  support phab links
+    {
+        //
+        // Regex explained: Match either `git` or `hg` followed by an `@`.
+        // Next, slurp up the hostname by reading until either a `:` or `/` is found.
+        // If a port is specified, slurp that up too. Finally, grab the project and
+        // repo names.
+        var sshParts = /(git|hg)@(.*?)(:[0-9]+)?(:|\/)(.*)(\/)(.*)/.exec(url);
+        if (sshParts) {
+            hostname = '//' + sshParts[2]
+            project = sshParts[5]
+            repoName = sshParts[7]
+            // Port is omitted in most cases. Bitbucket Server is special:
+            // ssh://git@bitbucket.atlassian.com:7999/ATLASSIAN/jira.git
+            if(sshParts[3]){
+                port = sshParts[3]
+            }
+            url = hostname + port + '/' + project + '/' + repoName;
+        }
     }
+    // End EasyPost edit
 
-    // I'm sure there is a nicer React/jsx way to do this:
-    return ExpandVars(pattern['base-url'], {
+    return {
         url : url,
+        hostname: hostname,
+        port: port,
+        project: project,
+        'repo': repoName,
         path: path,
         rev: rev,
         anchor: anchor
-    });
+    };
+}
+
+export function UrlToRepo(repo, path, line, rev) {
+    var urlParts = UrlParts(repo, path, line, rev),
+        pattern = repo['url-pattern']
+
+    // I'm sure there is a nicer React/jsx way to do this:
+    return ExpandVars(pattern['base-url'], urlParts);
 }

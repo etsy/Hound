@@ -14,7 +14,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/blang/semver"
+	"github.com/blang/semver/v4"
 	"github.com/hound-search/hound/api"
 	"github.com/hound-search/hound/config"
 	"github.com/hound-search/hound/searcher"
@@ -47,7 +47,7 @@ func makeSearchers(cfg *config.Config) (map[string]*searcher.Searcher, bool, err
 	if len(errs) > 0 {
 		// NOTE: This mutates the original config so the repos
 		// are not even seen by other code paths.
-		for name, _ := range errs {  //nolint
+		for name, _ := range errs { //nolint
 			delete(cfg.Repos, name)
 		}
 
@@ -79,7 +79,7 @@ func registerShutdownSignal() <-chan os.Signal {
 	return shutdownCh
 }
 
-func makeTemplateData(cfg *config.Config) (interface{}, error) {  //nolint
+func makeTemplateData(cfg *config.Config) (interface{}, error) { //nolint
 	var data struct {
 		ReposAsJson string
 	}
@@ -98,7 +98,7 @@ func makeTemplateData(cfg *config.Config) (interface{}, error) {  //nolint
 	return &data, nil
 }
 
-func runHttp(  //nolint
+func runHttp( //nolint
 	addr string,
 	dev bool,
 	cfg *config.Config,
@@ -111,15 +111,16 @@ func runHttp(  //nolint
 	}
 
 	m.Handle("/", h)
-	api.Setup(m, idx)
+	api.Setup(m, idx, cfg.ResultLimit)
 	return http.ListenAndServe(addr, m)
 }
 
+// TODO: Automatically increment this when building a release
 func getVersion() semver.Version {
 	return semver.Version{
 		Major: 0,
-		Minor: 4,
-		Patch: 0,
+		Minor: 7,
+		Patch: 1,
 	}
 }
 
@@ -164,7 +165,7 @@ func main() {
 	handleShutdown(shutdownCh, idx)
 
 	host := *flagAddr
-	if strings.HasPrefix(host, ":") {
+	if strings.HasPrefix(host, ":") { //nolint
 		host = "localhost" + host
 	}
 
